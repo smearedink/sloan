@@ -55,37 +55,36 @@ class Track(models.Model):
       help_text="This is the text in parentheses after a song name")
     duration = models.DurationField(default=0)
     #bpm = models.PositiveSmallIntegerField(default=0)
-    """
-    KEY_CHOICES = (
-        (0, 'C'),
-        (1, 'C sharp'),
-        (2, 'D'),
-        (3, 'E flat'),
-        (4, 'E'),
-        (5, 'F'),
-        (6, 'F sharp'),
-        (7, 'G'),
-        (8, 'A flat'),
-        (9, 'A'),
-        (10, 'B flat'),
-        (11, 'B'),
-    )
-    key = models.PositiveSmallIntegerField(choices=KEY_CHOICES,
-                                           null=True, blank=True)
-    MODE_CHOICES = (
-        (0, 'minor'),
-        (1, 'major'),
-    )
-    mode = models.PositiveSmallIntegerField(choices=MODE_CHOICES,
-                                            null=True, blank=True)
-    """
 
-    def get_formatted_duration(self):
-        minutes = self.duration / 60
-        seconds = self.duration % 60
-        return "%d:%02d" % (minutes, seconds)
-    get_formatted_duration.short_description = 'Length'
-    get_formatted_duration.admin_order_field = 'duration'
+    # KEY_CHOICES = (
+    #     (0, 'C'),
+    #     (1, 'C sharp'),
+    #     (2, 'D'),
+    #     (3, 'E flat'),
+    #     (4, 'E'),
+    #     (5, 'F'),
+    #     (6, 'F sharp'),
+    #     (7, 'G'),
+    #     (8, 'A flat'),
+    #     (9, 'A'),
+    #     (10, 'B flat'),
+    #     (11, 'B'),
+    # )
+    # key = models.PositiveSmallIntegerField(choices=KEY_CHOICES,
+    #                                        null=True, blank=True)
+    # MODE_CHOICES = (
+    #     (0, 'minor'),
+    #     (1, 'major'),
+    # )
+    # mode = models.PositiveSmallIntegerField(choices=MODE_CHOICES,
+    #                                         null=True, blank=True)
+
+    #def get_formatted_duration(self):
+    #    minutes = self.duration / 60
+    #    seconds = self.duration % 60
+    #    return "%d:%02d" % (minutes, seconds)
+    #get_formatted_duration.short_description = 'Length'
+    #get_formatted_duration.admin_order_field = 'duration'
 
 class Release(models.Model):
     title = models.CharField(max_length=80)
