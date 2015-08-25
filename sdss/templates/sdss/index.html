@@ -1,0 +1,25 @@
+{% load staticfiles %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'sdss/style.css' %}" />
+
+{% if release_list %}
+    <ul>
+    {% for release in release_list %}
+        {#<li><a href="{% url 'sdss:detail' question.id %}">{{ question.question_text }}</a></li>#}
+        <li>
+            <h3>{{ release.title }} ({{ release.release_date }})</h3>
+            <ol>
+            {% for track in release.tracks.all %}
+                {% if track.is_single %}
+                    <li><font color="magenta">{{ track.title }}</font></li>
+                {% else %}
+                    <li>{{ track.title }}</li>
+                {% endif %}
+            {% endfor %}
+            </ol>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No albums are available.</p>
+{% endif %}
