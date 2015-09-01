@@ -4,5 +4,6 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.IndexView.as_view(), name='index'),
-    url(r'^api/get_songs', views.get_songs, name='get_songs'),
+    url(r'^plot_stuff', views.plot_stuff, name='plot_stuff'),
+    url(r'^api/get_tracks', views.get_tracks, name='get_tracks'),
 ]
