@@ -11,20 +11,16 @@ body {
   fill: none;
   stroke: #000;
   shape-rendering: crispEdges;
+  /*shape-rendering: geometricPrecision;*/
 }
 
-.x.axis path {
+/*.x.axis path {
   display: none;
-}
-
-/*.line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 1.5px;
 }*/
 
 .square {
   stroke-width: 0;
+  shape-rendering: crispEdges;
   /*opacity: 0.5;*/
 }
 
@@ -34,34 +30,42 @@ body {
 <script>
 
 var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    //width = 960 - margin.left - margin.right,
+    width = 600 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
 
 var parseDate = d3.time.format("%Y-%m-%d").parse; // for dates like "2014-01-01"
 //var parseDate = d3.time.format("%Y-%m-%dT00:00:00Z").parse;  // for dates like "2014-01-01T00:00:00Z"
 
-//color = d3.scale.category20c();
-color = d3.scale.category10();
+var colours = {
+    "NHTEOIpink" : "#F9BEF1",
+    "HRgreen"    : "#167F59",
+    "DCyellow"   : "#F0CF56",
+    "BTBtan"     : "#C5BCB6",
+    "OCTAblue"   : "#228CE7",
+    "NBred"      : "#D12C2D",
+};
+var band_colours = {
+    "Jay"      : colours.NHTEOIpink,
+    "Patrick"  : colours.HRgreen,
+    "Andrew"   : colours.BTBtan,
+    "Chris"    : colours.OCTAblue,
+    "Multiple" : colours.DCyellow,
+};
 
-//var x = d3.time.scale()
-//    .range([0, width]);
 var x = d3.scale.linear()
     .range([0, width]);
 
-var y = d3.scale.linear()
+var y = d3.time.scale()
     .range([height, 0]);
 
 var xAxis = d3.svg.axis()
     .scale(x)
-    .orient("bottom");
+    .orient("top");
 
 var yAxis = d3.svg.axis()
     .scale(y)
     .orient("left");
-
-var line = d3.svg.line()
-    .x(function(d) { return x(d.release__release_date); })
-    .y(function(d) { return y(d.track_number); });
 
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -70,67 +74,66 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var track_data;
-//var bandmember_data;
 
 d3.json("{% url "get_tracks" %}", function(error, data) {
-  data.forEach(function(d) {
-    d.release__release_date = parseDate(d.release__release_date);
-  });
-  if (error) console.log(error);
+    data.forEach(function(d) {
+        d.release__release_date = parseDate(d.release__release_date);
+    });
+    if (error) console.log(error);
 
-  track_data = data;
+    track_data = data;
 
-  x.domain(d3.extent(data, function(d) { return d.release__release_date; }));
-  y.domain(d3.extent(data, function(d) { return d.track_number; }));
+    var xlims = d3.extent(data, function(d) { return d.track_number; });
+    xlims[0] -= 1;
+    x.domain(xlims);
+    var ylims = d3.extent(data, function(d) { return d.release__release_date; });
+    ylims[1] = d3.time.year.offset(ylims[1], 1);
+    y.domain([ylims[1], ylims[0]])
 
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
+    svg.selectAll(".dot")
+        .data(data)
+      .enter().append("rect")
+        .attr("class", "square")
+        .attr("width", x(1)-x(0))
+        .attr("height", x(1)-x(0))
+        .attr("x", function(d) { return x(d.track_number - 1); })
+        .attr("y", function(d) { return y(d.release__release_date); })
+        .style("fill", function(d) {
+            if (d.writers.length == 1)
+                return band_colours[d.writers[0]];
+            else
+                return band_colours["Multiple"];
+        });
 
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("Track Number");
+    var legend = svg.selectAll(".legend")
+        .data(Object.keys(band_colours))
+      .enter().append("g")
+        .attr("class", "legend")
+        .attr("transform", function(d, i) {
+            return "translate(0," + (10 + i * 20) + ")";
+        });
 
-  svg.selectAll(".dot")
-      .data(data)
-    .enter().append("rect")
-      .attr("class", "square")
-      .attr("width", 10)
-      .attr("height", 10)
-      .attr("x", function(d) { return x(d.release__release_date); })
-      .attr("y", function(d) { return y(d.track_number); })
-      .style("fill", function(d) { return color(d.writers); });
+    legend.append("rect")
+        .attr("x", width - 18)
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", function(d) { return band_colours[d]; });
 
-  var legend = svg.selectAll(".legend")
-      .data(color.domain())
-    .enter().append("g")
-      .attr("class", "legend")
-      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+    legend.append("text")
+        .attr("x", width - 24)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "end")
+        .text(function(d) { return d; });
 
-  legend.append("rect")
-      .attr("x", width - 18)
-      .attr("width", 18)
-      .attr("height", 18)
-      .style("fill", color);
+    svg.append("g")
+        .attr("class", "x axis")
+        //.attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
 
-  legend.append("text")
-      .attr("x", width - 24)
-      .attr("y", 9)
-      .attr("dy", ".35em")
-      .style("text-anchor", "end")
-      .text(function(d) { return d; });
-
-  /*svg.append("path")
-      .datum(data)
-      .attr("class", "line")
-      .attr("d", line);*/
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
 });
 
 </script>
