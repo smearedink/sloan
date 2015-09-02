@@ -3,15 +3,15 @@
 <style>
 
 body {
-  font: 10px sans-serif;
+    font: 10px sans-serif;
 }
 
 .axis path,
 .axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-  /*shape-rendering: geometricPrecision;*/
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+    /*shape-rendering: geometricPrecision;*/
 }
 
 /*.x.axis path {
@@ -19,9 +19,9 @@ body {
 }*/
 
 .square {
-  stroke-width: 0;
-  shape-rendering: crispEdges;
-  /*opacity: 0.5;*/
+    stroke-width: 0;
+    shape-rendering: crispEdges;
+    /*opacity: 0.5;*/
 }
 
 </style>
@@ -29,12 +29,12 @@ body {
 <script src="http://d3js.org/d3.v3.js"></script>
 <script>
 
-var margin = {top: 20, right: 20, bottom: 30, left: 50},
+var margin = {top: 20, right: 20, bottom: 30, left: 150},
     //width = 960 - margin.left - margin.right,
-    width = 600 - margin.left - margin.right,
-    height = 600 - margin.top - margin.bottom;
+    width = 800 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
-var parseDate = d3.time.format("%Y-%m-%d").parse; // for dates like "2014-01-01"
+//var parseDate = d3.time.format("%Y-%m-%d").parse; // for dates like "2014-01-01"
 //var parseDate = d3.time.format("%Y-%m-%dT00:00:00Z").parse;  // for dates like "2014-01-01T00:00:00Z"
 
 var colours = {
@@ -56,8 +56,21 @@ var band_colours = {
 var x = d3.scale.linear()
     .range([0, width]);
 
-var y = d3.time.scale()
-    .range([height, 0]);
+/*var y = d3.time.scale()
+    .range([height, 0]);*/
+
+var y = d3.scale.ordinal()
+    .rangeBands([0, height]);
+
+var all_LPs;
+d3.json("{% url "get_LPs" %}", function(error, data) {
+    if (error) console.log(error);
+    all_LPs = data;
+    y.domain(all_LPs.map(function(a) { return a.title; }));
+});
+//var x = d3.scale.ordinal()
+//    .domain(["A", "B", "C", "D", "E", "F"])
+//    .rangeBands([0, width]);
 
 var xAxis = d3.svg.axis()
     .scale(x)
@@ -76,9 +89,9 @@ var svg = d3.select("body").append("svg")
 var track_data;
 
 d3.json("{% url "get_tracks" %}", function(error, data) {
-    data.forEach(function(d) {
+    /*data.forEach(function(d) {
         d.release__release_date = parseDate(d.release__release_date);
-    });
+    });*/
     if (error) console.log(error);
 
     track_data = data;
@@ -86,18 +99,30 @@ d3.json("{% url "get_tracks" %}", function(error, data) {
     var xlims = d3.extent(data, function(d) { return d.track_number; });
     xlims[0] -= 1;
     x.domain(xlims);
-    var ylims = d3.extent(data, function(d) { return d.release__release_date; });
-    ylims[1] = d3.time.year.offset(ylims[1], 1);
-    y.domain([ylims[1], ylims[0]])
+    //var ylims = d3.extent(data, function(d) { return d.release__release_date; });
+    //ylims[1] = d3.time.year.offset(ylims[1], 1);
+    //y.domain([ylims[1], ylims[0]])
 
-    svg.selectAll(".dot")
-        .data(data)
+    var square_width = x(1) - x(0);
+    var square_height = square_width;
+    svg.selectAll(".square")
+        .data(track_data)
       .enter().append("rect")
         .attr("class", "square")
-        .attr("width", x(1)-x(0))
-        .attr("height", x(1)-x(0))
+        .attr("width", square_width)
+        .attr("height", square_height)
         .attr("x", function(d) { return x(d.track_number - 1); })
-        .attr("y", function(d) { return y(d.release__release_date); })
+        //.attr("y", function(d) { return y(d.release__release_date); })
+        .attr("y", function(d) {
+            return y(d.release__title) + (y.rangeBand()-square_height)/2;
+        })
+        .on("mouseover", function(d) {
+            d3.select(this).attr("opacity", 0.5);
+            console.log(d.song__title);
+        })
+        .on("mouseout", function() {
+            d3.select(this).attr("opacity", 1);
+        })
         .style("fill", function(d) {
             if (d.writers.length == 1)
                 return band_colours[d.writers[0]];
