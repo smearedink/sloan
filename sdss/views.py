@@ -35,6 +35,12 @@ def get_tracks(request):
 
     return JsonResponse(tracks, encoder=CustomJSONEncoder, safe=False)
 
+def get_LPs(request):
+    albums = Release.objects.filter(album_type=1) \
+      .values('id', 'release_date', 'title')
+
+    return JsonResponse(list(albums), encoder=CustomJSONEncoder, safe=False)
+
 def plot_stuff(request):
     return render(request, 'sdss/plot_stuff.html')
 
