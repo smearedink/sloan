@@ -111,6 +111,10 @@ class Release(models.Model):
         return sum([t.duration for t in Track.objects.filter(release=self)], timedelta())
     get_duration.short_description = "Length"
 
+    def get_track_starts(self):
+        durations = [t.duration for t in Track.objects.filter(release=self)]
+        return [sum(durations[:ii], timedelta()) for ii in range(self.get_ntracks())]
+
     class Meta:
         ordering = ['release_date']
 

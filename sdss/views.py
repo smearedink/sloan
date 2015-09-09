@@ -36,10 +36,16 @@ def get_tracks(request):
     return JsonResponse(tracks, encoder=CustomJSONEncoder, safe=False)
 
 def get_LPs(request):
-    albums = Release.objects.filter(album_type=1) \
-      .values('id', 'release_date', 'title')
+    albums = list(
+      Release.objects.filter(album_type=1) \
+        .values('id', 'release_date', 'title')
+    )
+    for ii in range(len(albums)):
+        this_album = Release.objects.get(id=albums[ii]['id'])
+        albums[ii]['duration'] = this_album.get_duration()
+        albums[ii]['track_starts'] = this_album.get_track_starts()
 
-    return JsonResponse(list(albums), encoder=CustomJSONEncoder, safe=False)
+    return JsonResponse(albums, encoder=CustomJSONEncoder, safe=False)
 
 def plot_stuff(request):
     return render(request, 'sdss/plot_stuff.html')

@@ -52,6 +52,7 @@ var band_colours = {
     "Chris"    : colours.OCTAblue,
     "Multiple" : colours.DCyellow,
 };
+var default_transition_t = 1000;
 
 var x = d3.scale.linear()
     .range([0, width]);
@@ -96,6 +97,8 @@ d3.json("{% url "get_tracks" %}", function(error, data) {
 
     track_data = data;
 
+    var current_axis_type = "tracknum";
+
     var xlims = d3.extent(data, function(d) { return d.track_number; });
     xlims[0] -= 1;
     x.domain(xlims);
@@ -122,6 +125,12 @@ d3.json("{% url "get_tracks" %}", function(error, data) {
         })
         .on("mouseout", function() {
             d3.select(this).attr("opacity", 1);
+        })
+        .on("click", function() {
+            if (current_axis_type == "tracknum")
+                setDurationAxis();
+            else if (current_axis_type == "duration")
+                setTrackNumAxis();
         })
         .style("fill", function(d) {
             if (d.writers.length == 1)
@@ -159,6 +168,44 @@ d3.json("{% url "get_tracks" %}", function(error, data) {
     svg.append("g")
         .attr("class", "y axis")
         .call(yAxis);
+
+    var setDurationAxis = function(t) {
+        t = typeof t !== 'undefined' ? t : default_transition_t;
+
+        current_axis_type = "duration";
+
+        var max_duration = d3.max(all_LPs.map(function(a) { return a.duration; }))
+        x.domain([0, max_duration]);
+
+        svg.select(".x.axis").transition().duration(t).call(xAxis);
+
+        svg.selectAll(".square")
+            .transition()
+            .duration(t)
+            .attr("x", function(d) {
+                var track_start = all_LPs.filter(function(obj) { return obj.id==d.release__id; })[0].track_starts[d.track_number-1]
+                return x(track_start);
+            })
+            .attr("width", function(d) { return x(d.duration); });
+    }
+
+    var setTrackNumAxis = function(t) {
+        t = typeof t !== 'undefined' ? t : default_transition_t;
+
+        current_axis_type = "tracknum";
+
+        var xlims = d3.extent(data, function(d) { return d.track_number; });
+        xlims[0] -= 1;
+        x.domain(xlims);
+
+        svg.select(".x.axis").transition().duration(t).call(xAxis);
+
+        svg.selectAll(".square")
+            .transition()
+            .duration(t)
+            .attr("x", function(d) { return x(d.track_number - 1); })
+            .attr("width", square_width);
+    }
 });
 
 </script>
